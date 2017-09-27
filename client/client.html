@@ -7,6 +7,124 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
   <script type="text/babel">
 
+    const sendGetAJAX = (e, userform) => {
+        console.log("getting");
+        const methodName = userform.querySelector("#methodSelect").value;
+        const URLName = userform.querySelector("#urlField").value;
+        const xhr = new XMLHttpRequest();
+        xhr.open(methodName,URLName);
+        
+        xhr.setRequestHeader("Accept","application/json");
+        
+        if(methodName == "get")
+        {
+        xhr.onload = () => handleGetRequest(xhr,true);
+        }
+        else
+        {
+        xhr.onload = () => handleGetRequest(xhr,false);
+        }
+        
+        xhr.send();
+        
+        e.preventDefault();
+        
+        return false;
+    };
+
+       const sendAddAJAX = (e, nameform) => {
+        console.log("adding");
+        const methodName = nameform.getAttribute("method");
+        const actionName = nameform.getAttribute("action");  
+        console.log(actionName);
+        const nameToadd = nameform.querySelector("#nameField");
+        const ageToadd = nameform.querySelector("#ageField");
+           
+        const xhr = new XMLHttpRequest();
+        xhr.open(methodName,actionName);
+        
+        xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');   
+           
+        xhr.setRequestHeader("Accept","application/json");
+        
+        xhr.onload = () => handleGetRequest(xhr,true);
+        
+        const formData = `name=${nameToadd.value}&age=${ageToadd.value}`;   
+           
+        xhr.send(formData);
+        
+        e.preventDefault();
+        
+        return false;
+    };
+    
+    const handleGetRequest = (xhr,parseResponse) => {
+        
+        console.log(xhr.getResponseHeader('etag'));
+        console.log(xhr.status);
+        //create the objects onto the page 
+        const para = document.querySelector("#para");
+        const head = document.querySelector("#head");
+        para.textContent = "";
+        head.textContent = "";
+        
+        if(xhr.status)
+        {
+         head.textContent = "Created";   
+        }
+        if(xhr.status == 200 || xhr.status == 304)
+        {
+            head.textContent = "Success";   
+        }
+        else if(xhr.status == 404)
+        {
+            head.textContent = "Resource Not Found";
+        }
+        else if(xhr.status == 400)
+        {
+            head.textContent = "Bad Request";
+        }
+        else if(xhr.status == 204)
+        {
+            head.textContent = "Updated (No Content)";
+        }
+
+        //if there is a JSON object in the response
+        if(parseResponse)
+        {
+            if(xhr.status == 200)
+            {
+                const object = JSON.parse(xhr.response);
+                console.dir(object);
+                const users = JSON.stringify(object.users);
+                para.textContent = users;
+            }
+            else if(xhr.status == 404 || xhr.status == 201 || xhr.status == 400)
+            {
+                const object = JSON.parse(xhr.response);
+                console.dir(object);
+                const message = JSON.stringify(object.message);
+                para.textContent = message;
+            }
+        }
+        
+    };
+
+
+    const init = () => {
+         console.log("start");
+         const userfrom = document.querySelector("#userForm");
+         const addform = document.querySelector("#nameForm");
+        
+         const getUsers = (e) => sendGetAJAX(e,userfrom);
+        
+         const sendUser = (e) => sendAddAJAX(e,addform);
+        
+         userfrom.addEventListener('submit',getUsers);
+         addform.addEventListener('submit',sendUser);
+    };
+    
+    window.onload = init;
   </script>
 </head>
 <body>
@@ -32,6 +150,8 @@
     </form>
   </section>
   <section id="content">
+    <p id="head"></p>
+    <p id="para"></p>
   </section>
 </body>
 </html>
